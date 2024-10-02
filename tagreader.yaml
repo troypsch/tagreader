@@ -40,7 +40,9 @@ esphome:
     - wait_until:
         api.connected:
     - logger.log: API is connected!
-    - rtttl.play: "success:d=24,o=5,b=100:c,g,b"
+    - output.turn_on: buzzer
+    - delay: 700ms  # Slightly longer vibration for "success"
+    - output.turn_off: buzzer
     - light.turn_on:
         id: activity_led
         brightness: 100%
@@ -100,13 +102,21 @@ button:
           message->add_uri_record(uri);
           ESP_LOGD("tagreader", "Writing payload: %s", uri.c_str());
           id(pn532_board).write_mode(message);
-      - rtttl.play: "write:d=24,o=5,b=100:b"
+      - output.turn_on: buzzer
+      - delay: 500ms  # Adjust the delay as per the tone's duration
+      - output.turn_off: buzzer
       - wait_until:
           not:
             pn532.is_writing:
       - light.turn_off:
           id: activity_led
-      - rtttl.play: "write:d=24,o=5,b=100:b,b"
+      - output.turn_on: buzzer
+      - delay: 500ms
+      - output.turn_off: buzzer
+      - delay: 200ms  # Short pause between vibrations
+      - output.turn_on: buzzer
+      - delay: 500ms
+      - output.turn_off: buzzer
   - platform: template
     name: Clean Tag
     id: clean_tag
@@ -120,13 +130,21 @@ button:
           green: 64.7%
           blue: 0%    
       - lambda: 'id(pn532_board).clean_mode();'
-      - rtttl.play: "write:d=24,o=5,b=100:b"
+      - output.turn_on: buzzer
+      - delay: 500ms  # Adjust the delay as per the tone's duration
+      - output.turn_off: buzzer
       - wait_until:
           not:
             pn532.is_writing:
       - light.turn_off:
           id: activity_led
-      - rtttl.play: "write:d=24,o=5,b=100:b,b"
+      - output.turn_on: buzzer
+      - delay: 500ms
+      - output.turn_off: buzzer
+      - delay: 200ms  # Short pause between vibrations
+      - output.turn_on: buzzer
+      - delay: 500ms
+      - output.turn_off: buzzer
   - platform: template
     name: Cancel writing 
     id: cancel_writing
@@ -136,7 +154,13 @@ button:
       - lambda: 'id(pn532_board).read_mode();'
       - light.turn_off:
           id: activity_led
-      - rtttl.play: "write:d=24,o=5,b=100:b,b"
+      - output.turn_on: buzzer
+      - delay: 500ms
+      - output.turn_off: buzzer
+      - delay: 200ms  # Short pause between vibrations
+      - output.turn_on: buzzer
+      - delay: 500ms
+      - output.turn_off: buzzer
 
   - platform: restart
     name: "${friendly_name} Restart"
@@ -151,17 +175,23 @@ api:
   services:
   - service: rfidreader_tag_ok
     then:
-    - rtttl.play: "beep:d=16,o=5,b=100:b"
+    - output.turn_on: buzzer
+    - delay: 300ms  # A shorter vibration duration to match the beep
+    - output.turn_off: buzzer
 
   - service: rfidreader_tag_ko
     then:
-    - rtttl.play: "beep:d=8,o=5,b=100:b"
+    - output.turn_on: buzzer  # Replace rtttl.play with motor vibration
+    - delay: 300ms  # A similar short vibration duration
+    - output.turn_off: buzzer  # Turn off the motor
 
-  - service: play_rtttl
+ - service: vibrate_motor  # New service to replace play_rtttl
     variables:
-      song_str: string
+      duration: int  # Allows specifying the duration of the vibration
     then:
-    - rtttl.play: !lambda 'return song_str;'
+    - output.turn_on: buzzer  # Turn on the motor
+    - delay: !lambda 'return duration;'  # Use the provided duration
+    - output.turn_off: buzzer  # Turn off the motor
 
   - service: write_tag_id
     variables:
@@ -179,13 +209,21 @@ api:
         uri += tag_id;
         message->add_uri_record(uri);
         id(pn532_board).write_mode(message);
-    - rtttl.play: "write:d=24,o=5,b=100:b"
+    - output.turn_on: buzzer
+    - delay: 500ms  # Adjust the delay as per the tone's duration
+    - output.turn_off: buzzer
     - wait_until:
         not:
           pn532.is_writing:
     - light.turn_off:
         id: activity_led
-    - rtttl.play: "write:d=24,o=5,b=100:b,b"
+    - output.turn_on: buzzer
+    - delay: 500ms
+    - output.turn_off: buzzer
+    - delay: 200ms  # Short pause between vibrations
+    - output.turn_on: buzzer
+    - delay: 500ms
+    - output.turn_off: buzzer
 
   - service: write_music_tag
     variables:
@@ -211,13 +249,21 @@ api:
           message->add_text_record(text);
         }
         id(pn532_board).write_mode(message);
-    - rtttl.play: "write:d=24,o=5,b=100:b"
+    - output.turn_on: buzzer
+    - delay: 500ms  # Adjust the delay as per the tone's duration
+    - output.turn_off: buzzer
     - wait_until:
         not:
           pn532.is_writing:
     - light.turn_off:
         id: activity_led
-    - rtttl.play: "write:d=24,o=5,b=100:b,b"
+    - output.turn_on: buzzer
+    - delay: 500ms
+    - output.turn_off: buzzer
+    - delay: 200ms  # Short pause between vibrations
+    - output.turn_on: buzzer
+    - delay: 500ms
+    - output.turn_off: buzzer
 
 # Enable OTA upgrade
 ota:
@@ -359,7 +405,9 @@ pn532_i2c:
         condition:
           switch.is_on: buzzer_enabled
         then:
-        - rtttl.play: "success:d=24,o=5,b=100:c,g,b"
+        - output.turn_on: buzzer
+        - delay: 700ms  # Slightly longer vibration for "success"
+        - output.turn_off: buzzer
   on_tag_removed:
     then:
     - homeassistant.event:
@@ -367,8 +415,9 @@ pn532_i2c:
 # Define the buzzer output
 output:
 - platform: esp8266_pwm
-  pin: D7
-  id: buzzer
+  pin: D7  # Adjust to the correct GPIO pin you're using
+  id: buzzer  # Your vibration motor's ID
+  frequency: 1000 Hz  # Starting frequency of 1000 Hz
 
 binary_sensor:
   - platform: status
@@ -390,10 +439,6 @@ text_sensor:
       name: "${friendly_name} Connected SSID"
       icon: mdi:wifi-strength-2
       entity_category: diagnostic
-
-# Define buzzer as output for RTTTL
-rtttl:
-  output: buzzer
 
 # Configure LED
 light:
