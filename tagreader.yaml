@@ -185,7 +185,7 @@ api:
     - delay: 300ms  # A similar short vibration duration
     - output.turn_off: buzzer  # Turn off the motor
 
- - service: vibrate_motor  # New service to replace play_rtttl
+  - service: vibrate_motor  # New service to replace play_rtttl
     variables:
       duration: int  # Allows specifying the duration of the vibration
     then:
